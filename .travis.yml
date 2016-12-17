@@ -1,0 +1,21 @@
+language: cpp
+sudo: required
+dist: trusty
+compiler:
+  - gcc
+  - clang
+before_install:
+  - sudo apt-get -qq update
+install:
+  - sudo apt-get -qq install autoconf automake autotools-dev libtool pkg-config
+  - sudo apt-get -qq install libssl-dev ruby
+before_script:
+  - echo '-------------------------------'
+  - echo 'Prepare mruby                  '
+  - echo '-------------------------------'
+  - git clone --depth 1 https://github.com/mruby/mruby.git
+script:
+  - autoreconf -if
+  - ./configure --with-mruby-prefix-root=./mruby
+  - make k2hash
+  - make

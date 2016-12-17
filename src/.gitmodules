@@ -1,0 +1,3 @@
+[submodule "k2hash"]
+	path = k2hash
+	url = https://github.com/yahoojapan/k2hash.git

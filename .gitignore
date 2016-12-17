@@ -1,0 +1,53 @@
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+*.su
+
+# files related to autoconf
+configure
+Makefile
+Makefile.in
+config.*
+autom4te.cache/
+aclocal.m4
+compile
+install-sh
+missing
+stamp-h1
+
+# mrbgems
+test-driver
+depcomp
+ltmain.sh
+gem_init.c
+gem_init.d
+**/*.d
