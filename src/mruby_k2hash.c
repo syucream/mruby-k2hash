@@ -45,11 +45,12 @@ mrb_k2hash_open(mrb_state *mrb, mrb_value self)
   k2h_h handler = 0;
   switch(flags) {
   case FLAG_READER:
-    handler = k2h_open_ro("", 1,
+    handler = k2h_open_ro(filename, 1,
         DEFAULT_MASK_BITCOUNT, DEFAULT_COLLISION_MASK_BITCOUNT, DEFAULT_MAX_ELEMENT_CNT, MIN_PAGE_SIZE);
     break;
   case FLAG_WRITER:
-    handler = k2h_open_rw("", 1,
+    // TODO Check whether the file exists
+    handler = k2h_open_rw(filename, 1,
         DEFAULT_MASK_BITCOUNT, DEFAULT_COLLISION_MASK_BITCOUNT, DEFAULT_MAX_ELEMENT_CNT, MIN_PAGE_SIZE);
     break;
   case FLAG_WRCREAT:
@@ -57,7 +58,9 @@ mrb_k2hash_open(mrb_state *mrb, mrb_value self)
         DEFAULT_MASK_BITCOUNT, DEFAULT_COLLISION_MASK_BITCOUNT, DEFAULT_MAX_ELEMENT_CNT, MIN_PAGE_SIZE);
     break;
   case FLAG_NEWDB:
-    // XXX Upsupported
+    // TODO Clear old key/value's
+    handler = k2h_open_rw(filename, 1,
+        DEFAULT_MASK_BITCOUNT, DEFAULT_COLLISION_MASK_BITCOUNT, DEFAULT_MAX_ELEMENT_CNT, MIN_PAGE_SIZE);
   default:
     break;
   }
