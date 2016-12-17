@@ -6,6 +6,7 @@ AC_INIT([mruby-k2hash], [0.0.1], [syucream1031@gmail.com])
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([src/mruby_k2hash.c])
 AC_CONFIG_HEADERS([config.h])
+LT_INIT()
 
 # Checks for programs.
 AC_PROG_CXX
