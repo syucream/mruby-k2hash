@@ -1,5 +1,7 @@
 # mruby-k2hash
 
+[![Build Status](https://travis-ci.org/syucream/mruby-k2hash.svg?branch=master)](https://travis-ci.org/syucream/mruby-k2hash)
+
 mruby binding of [yahoojapan/k2hash](https://github.com/yahoojapan/k2hash)
 
 # Quickstart
