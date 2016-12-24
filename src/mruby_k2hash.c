@@ -250,6 +250,13 @@ mrb_k2hash_close(mrb_state *mrb, mrb_value self)
   return mrb_nil_value();
 }
 
+static mrb_value
+mrb_k2hash_closed_q(mrb_state *mrb, mrb_value self)
+{
+  k2h_h handler = (k2h_h)DATA_PTR(self);
+  return handler == NULL ? mrb_true_value() : mrb_false_value();
+}
+
 void
 mrb_mruby_k2hash_gem_init(mrb_state* mrb)
 {
@@ -268,6 +275,7 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_method(mrb, rclass, "[]", mrb_k2hash_get, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "[]=", mrb_k2hash_set, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, rclass, "close", mrb_k2hash_close, MRB_ARGS_NONE());
+  mrb_define_method(mrb, rclass, "closed?", mrb_k2hash_closed_q, MRB_ARGS_NONE());
 
   mrb_include_module(mrb, rclass, mrb_module_get(mrb, "Enumerable"));
 
