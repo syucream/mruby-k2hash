@@ -6,12 +6,14 @@ mruby binding of [yahoojapan/k2hash](https://github.com/yahoojapan/k2hash)
 
 # Quickstart
 
-1. build mruby with mruby-k2hash
+1. build mruby with mruby-k2hash. Or use [the Docker image](https://hub.docker.com/r/syucream/mruby-k2hash/).
 
 ```
 # mruby root dir
 $ MRUBY_CONFIG=./path/to/build_config.rb ./minirake
 ```
+
+
 
 2. Run mirb and test K2Hash class
 
@@ -38,6 +40,62 @@ mirb - Embeddable Interactive Ruby Shell
 > k2hash.close
  => nil
 ```
+
+# Implemented methods
+
+* [DBM](http://ruby-doc.org/stdlib-2.3.3/libdoc/dbm/rdoc/DBM.html) like methods:
+
+  - `H2Hash` has `each` so you can also use [Enumerable methods](https://ruby-doc.org/core-2.3.3/Enumerable.html).
+
+
+| method      | implemented?       |
+|:------------|--------------------|
+| []          | :heavy_check_mark: |
+| []=         | :heavy_check_mark: |
+| clear       |                    |
+| close       | :heavy_check_mark: |
+| closed?     | :heavy_check_mark: |
+| delete      | :heavy_check_mark: |
+| delete_if   |                    |
+| reject!     |                    |
+| each        | :heavy_check_mark: |
+| each_pair   | :heavy_check_mark: |
+| each_key    | :heavy_check_mark: |
+| each_value  | :heavy_check_mark: |
+| empty?      | :heavy_check_mark: |
+| fetch       | :heavy_check_mark: |
+| has_key?    | :heavy_check_mark: |
+| include?    | :heavy_check_mark: |
+| key?        | :heavy_check_mark: |
+| member?     | :heavy_check_mark: |
+| has_value?  |                    |
+| value?      |                    |
+| index       |                    |
+| invert      |                    |
+| key         | :heavy_check_mark: |
+| keys        | :heavy_check_mark: |
+| length      | :heavy_check_mark: |
+| size        | :heavy_check_mark: |
+| reject      |                    |
+| replace     |                    |
+| select      |                    |
+| shift       |                    |
+| store       | :heavy_check_mark: |
+| to_a        |                    |
+| to_hash     |                    |
+| update      |                    |
+| values      | :heavy_check_mark: |
+| values_at   |                    |
+
+# TODO
+
+* Support k2hash features. Especially...:
+
+  - open mode
+  - subkey
+  - transaction
+  - queue
+  - attributes
 
 # License
 
