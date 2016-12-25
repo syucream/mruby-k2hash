@@ -201,6 +201,22 @@ mrb_k2hash_set(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
+mrb_k2hash_delete(mrb_state *mrb, mrb_value self)
+{
+  char *key;
+  mrb_get_args(mrb, "z", &key);
+
+  k2h_h handler = _k2hash_get_handler(mrb, self);
+
+  bool success = k2h_remove_all(handler, (unsigned char*)key, strlen(key));
+  if (!success) {
+    mrb_raise(mrb, E_K2HASH_ERROR, "k2h_remove_all is failed");
+  }
+
+  return mrb_nil_value();
+}
+
+static mrb_value
 mrb_k2hash_each(mrb_state *mrb, mrb_value self)
 {
   mrb_value block;
@@ -240,6 +256,14 @@ mrb_k2hash_each_value(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
+mrb_k2hash_empty_q(mrb_state *mrb, mrb_value self)
+{
+  k2h_h handler = _k2hash_get_handler(mrb, self);
+  bool is_empty = k2h_find_first(handler) == K2H_INVALID_HANDLE;
+  return is_empty ? mrb_true_value() : mrb_false_value();
+}
+
+static mrb_value
 mrb_k2hash_close(mrb_state *mrb, mrb_value self)
 {
   k2h_h handler = _k2hash_get_handler(mrb, self);
@@ -265,17 +289,19 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   rclass = mrb_define_class(mrb, K2HASH_CLASSNAME, mrb->object_class);
 
   mrb_define_method(mrb, rclass, "initialize", mrb_k2hash_open, MRB_ARGS_REQ(3));
-  mrb_define_method(mrb, rclass, "open", mrb_k2hash_open, MRB_ARGS_REQ(3));
-  mrb_define_method(mrb, rclass, "fetch", mrb_k2hash_get, MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, rclass, "store", mrb_k2hash_set, MRB_ARGS_REQ(2));
-  mrb_define_method(mrb, rclass, "each", mrb_k2hash_each, MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, rclass, "each_pair", mrb_k2hash_each, MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, rclass, "each_key", mrb_k2hash_each_key, MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, rclass, "each_value", mrb_k2hash_each_value, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "[]", mrb_k2hash_get, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "[]=", mrb_k2hash_set, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, rclass, "close", mrb_k2hash_close, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "closed?", mrb_k2hash_closed_q, MRB_ARGS_NONE());
+  mrb_define_method(mrb, rclass, "delete", mrb_k2hash_delete, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "each", mrb_k2hash_each, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "each_key", mrb_k2hash_each_key, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "each_pair", mrb_k2hash_each, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "each_value", mrb_k2hash_each_value, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "empty?", mrb_k2hash_empty_q, MRB_ARGS_NONE());
+  mrb_define_method(mrb, rclass, "fetch", mrb_k2hash_get, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "open", mrb_k2hash_open, MRB_ARGS_REQ(3));
+  mrb_define_method(mrb, rclass, "store", mrb_k2hash_set, MRB_ARGS_REQ(2));
 
   mrb_include_module(mrb, rclass, mrb_module_get(mrb, "Enumerable"));
 
