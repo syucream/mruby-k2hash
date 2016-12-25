@@ -348,6 +348,7 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_method(mrb, rclass, "empty?", mrb_k2hash_empty_q, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "fetch", mrb_k2hash_get, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "has_key?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "include?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "key?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "member?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "open", mrb_k2hash_open, MRB_ARGS_REQ(3));
