@@ -29,6 +29,45 @@ class MrubyK2hashTest < MTest::Unit::TestCase
     assert_nil k2hash['key200']
   end
 
+  def test_each
+    k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.store('key1', 'value1')
+    k2hash.store('key2', 'value2')
+    k2hash.store('key3', 'value3')
+
+    k2hash.each do |k, v|
+      assert_true k == 'key1' || k == 'key2' || k == 'key3'
+      assert_true v == 'value1' || v == 'value2' || k == 'value3'
+    end
+
+    k2hash.each_pair do |k, v|
+      assert_true k == 'key1' || k == 'key2' || k == 'key3'
+      assert_true v == 'value1' || v == 'value2' || v == 'value3'
+    end
+  end
+
+  def test_each_key
+    k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.store('key1', 'value1')
+    k2hash.store('key2', 'value2')
+    k2hash.store('key3', 'value3')
+
+    k2hash.each_key do |k|
+      assert_true k == 'key1' || k == 'key2' || k == 'key3'
+    end
+  end
+
+  def test_each_value
+    k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.store('key1', 'value1')
+    k2hash.store('key2', 'value2')
+    k2hash.store('key3', 'value3')
+
+    k2hash.each_value do |v|
+      assert_true v == 'value1' || v == 'value2' || v == 'value3'
+    end
+  end
+
   def test_has_key
     k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
     k2hash.store('key1', 'value1')
