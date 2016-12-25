@@ -264,6 +264,13 @@ mrb_k2hash_empty_q(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
+mrb_k2hash_has_key_q(mrb_state *mrb, mrb_value self)
+{
+  bool has_key = !mrb_nil_p(mrb_k2hash_get(mrb, self));
+  return has_key ? mrb_true_value() : mrb_false_value();
+}
+
+static mrb_value
 mrb_k2hash_close(mrb_state *mrb, mrb_value self)
 {
   k2h_h handler = _k2hash_get_handler(mrb, self);
@@ -300,6 +307,9 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_method(mrb, rclass, "each_value", mrb_k2hash_each_value, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "empty?", mrb_k2hash_empty_q, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "fetch", mrb_k2hash_get, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "has_key?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "key?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "member?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "open", mrb_k2hash_open, MRB_ARGS_REQ(3));
   mrb_define_method(mrb, rclass, "store", mrb_k2hash_set, MRB_ARGS_REQ(2));
 
