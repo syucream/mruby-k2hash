@@ -43,6 +43,7 @@ compile
 install-sh
 missing
 stamp-h1
+libtool
 
 # mrbgems
 test-driver
