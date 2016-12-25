@@ -3,6 +3,7 @@
 
 #include "mruby.h"
 #include "mruby/data.h"
+#include "mruby/proc.h"
 #include "mruby/variable.h"
 
 #include "k2hash.h"
@@ -24,6 +25,9 @@ enum OpenFlag {
   FLAG_NEWDB
 };
 
+/*
+ * Utils
+ */
 #define _k2hash_each_pair(mrb, block, h, rv)                                                  \
   for (k2h_find_h fh = k2h_find_first(h); K2H_INVALID_HANDLE != fh; fh = k2h_find_next(fh)) { \
     bool failed = _yield_with_pair(mrb, block, fh, &rv);                                      \
@@ -123,6 +127,9 @@ struct mrb_data_type K2Hash_type = {
 };
 
 
+/*
+ * Core methods
+ */
 static mrb_value
 mrb_k2hash_open(mrb_state *mrb, mrb_value self)
 {
@@ -288,6 +295,39 @@ mrb_k2hash_closed_q(mrb_state *mrb, mrb_value self)
   return handler == NULL ? mrb_true_value() : mrb_false_value();
 }
 
+/*
+ * Enumerable methods
+ */
+static mrb_value
+_mrb_k2hash_keys_map(mrb_state *mrb, mrb_value v)
+{
+  mrb_value key, val;
+  mrb_get_args(mrb, "SS", &key, &val);
+  return key;
+}
+static mrb_value
+_mrb_k2hash_values_map(mrb_state *mrb, mrb_value v)
+{
+  mrb_value key, val;
+  mrb_get_args(mrb, "SS", &key, &val);
+  return val;
+}
+
+#define DEFINE_MAPPER(target)                                                             \
+  static mrb_value                                                                        \
+  mrb_k2hash_##target(mrb_state *mrb, mrb_value self)                                     \
+  {                                                                                       \
+    RProc* proc = mrb_proc_new_cfunc(mrb, _mrb_k2hash_##target##_map);                    \
+    mrb_value block = mrb_obj_value(proc);                                                \
+    return mrb_funcall_with_block(mrb, self, mrb_intern_lit(mrb, "map"), 0, NULL, block); \
+  }
+
+DEFINE_MAPPER(keys)
+DEFINE_MAPPER(values)
+
+/*
+ * Definitions
+ */
 void
 mrb_mruby_k2hash_gem_init(mrb_state* mrb)
 {
@@ -314,6 +354,10 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_method(mrb, rclass, "store", mrb_k2hash_set, MRB_ARGS_REQ(2));
 
   mrb_include_module(mrb, rclass, mrb_module_get(mrb, "Enumerable"));
+  mrb_define_method(mrb, rclass, "keys", mrb_k2hash_keys, MRB_ARGS_NONE());
+  mrb_define_method(mrb, rclass, "values", mrb_k2hash_values, MRB_ARGS_NONE());
+  mrb_define_alias(mrb, rclass, "length", "count");
+  mrb_define_alias(mrb, rclass, "size", "count");
 
   mrb_define_const(mrb, rclass, "READER", mrb_fixnum_value(FLAG_READER));
   mrb_define_const(mrb, rclass, "WRITER", mrb_fixnum_value(FLAG_WRITER));
