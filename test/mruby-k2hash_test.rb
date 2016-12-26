@@ -37,7 +37,7 @@ class MrubyK2hashTest < MTest::Unit::TestCase
 
     k2hash.each do |k, v|
       assert_true k == 'key1' || k == 'key2' || k == 'key3'
-      assert_true v == 'value1' || v == 'value2' || k == 'value3'
+      assert_true v == 'value1' || v == 'value2' || v == 'value3'
     end
 
     k2hash.each_pair do |k, v|
