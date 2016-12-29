@@ -9,6 +9,7 @@
 #include "k2hash.h"
 #include "k2hutil.h"
 
+#define PAIR_ARGC 2
 #define K2HASH_CLASSNAME "K2Hash"
 #define E_K2HASH_ERROR (mrb_class_get_under(mrb, mrb_class_get(mrb, K2HASH_CLASSNAME), "K2HashHandlerError"))
 
@@ -28,6 +29,23 @@ enum OpenFlag {
 /*
  * Utils
  */
+#define K2HASH_ITER_BEGIN(mrb, h, k, klen, v, vlen)                                          \
+  for (k2h_find_h fh = k2h_find_first(h); K2H_INVALID_HANDLE != fh; fh = k2h_find_next(fh)) { \
+    bool failed = false;                                                                      \
+    if (k2h_find_get_key(fh, &k, &klen) && k2h_find_get_value(fh, &v, &vlen)) {
+
+#define K2HASH_ITER_END(mrb, k, v)                                                           \
+    } else {                                                                                  \
+      failed = true;                                                                          \
+    }                                                                                         \
+    K2H_Free(k);                                                                              \
+    K2H_Free(v);                                                                              \
+                                                                                              \
+    if (failed) {                                                                             \
+      mrb_raise(mrb, E_K2HASH_ERROR, "k2h_find iterations are failed");                       \
+    }                                                                                         \
+  }
+
 #define _k2hash_each_pair(mrb, block, h, rv)                                                  \
   for (k2h_find_h fh = k2h_find_first(h); K2H_INVALID_HANDLE != fh; fh = k2h_find_next(fh)) { \
     bool failed = _yield_with_pair(mrb, block, fh, &rv);                                      \
@@ -47,7 +65,6 @@ enum OpenFlag {
 static inline bool
 _yield_with_pair(mrb_state* mrb, mrb_value block, k2h_find_h fh, mrb_value* rv)
 {
-#define ARGC 2
   unsigned char *ck	= NULL, *cv = NULL;
   size_t klen = 0, vlen = 0;
   bool failed = false;
@@ -55,8 +72,8 @@ _yield_with_pair(mrb_state* mrb, mrb_value block, k2h_find_h fh, mrb_value* rv)
   if (k2h_find_get_key(fh, &ck, &klen) && k2h_find_get_value(fh, &cv, &vlen)) {
     mrb_value key = mrb_str_new(mrb, (char*)ck, klen);
     mrb_value val = mrb_str_new(mrb, (char*)cv, vlen);
-    mrb_value argv[ARGC] = {key, val};
-    *rv = mrb_yield_argv(mrb, block, ARGC, argv);
+    mrb_value argv[PAIR_ARGC] = {key, val};
+    *rv = mrb_yield_argv(mrb, block, PAIR_ARGC, argv);
   } else {
     failed = true;
   }
@@ -64,7 +81,6 @@ _yield_with_pair(mrb_state* mrb, mrb_value block, k2h_find_h fh, mrb_value* rv)
   K2H_Free(cv);
 
   return failed;
-#undef ARGC
 }
 
 static inline bool
@@ -295,6 +311,32 @@ mrb_k2hash_closed_q(mrb_state *mrb, mrb_value self)
   return handler == NULL ? mrb_true_value() : mrb_false_value();
 }
 
+static mrb_value
+mrb_k2hash_delete_if(mrb_state *mrb, mrb_value self)
+{
+  mrb_value block;
+  mrb_get_args(mrb, "&", &block);
+
+  unsigned char *ck	= NULL, *cv = NULL;
+  size_t klen = 0, vlen = 0;
+  k2h_h handler = _k2hash_get_handler(mrb, self);
+
+  K2HASH_ITER_BEGIN(mrb, handler, ck, klen, cv, vlen);
+  {
+    mrb_value key = mrb_str_new(mrb, (char*)ck, klen);
+    mrb_value val = mrb_str_new(mrb, (char*)cv, vlen);
+    mrb_value argv[PAIR_ARGC] = {key, val};
+    mrb_value rc = mrb_yield_argv(mrb, block, PAIR_ARGC, argv);
+
+    if (mrb_bool(rc)) {
+      failed = !(k2h_remove_all(handler, ck, klen));
+    }
+  }
+  K2HASH_ITER_END(mrb, ck, cv);
+
+  return self;
+}
+
 /*
  * Enumerable methods
  */
@@ -353,6 +395,8 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_method(mrb, rclass, "member?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "open", mrb_k2hash_open, MRB_ARGS_REQ(3));
   mrb_define_method(mrb, rclass, "store", mrb_k2hash_set, MRB_ARGS_REQ(2));
+  mrb_define_method(mrb, rclass, "reject!", mrb_k2hash_delete_if, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "delete_if", mrb_k2hash_delete_if, MRB_ARGS_REQ(1));
 
   mrb_include_module(mrb, rclass, mrb_module_get(mrb, "Enumerable"));
   mrb_define_method(mrb, rclass, "keys", mrb_k2hash_keys, MRB_ARGS_NONE());
