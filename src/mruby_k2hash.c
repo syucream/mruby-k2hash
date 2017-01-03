@@ -397,6 +397,7 @@ mrb_k2hash_invert(mrb_state *mrb, mrb_value self)
 
   return hash;
 }
+
 /*
  * Enumerable methods
  */
@@ -426,6 +427,19 @@ _mrb_k2hash_values_map(mrb_state *mrb, mrb_value v)
 
 DEFINE_MAPPER(keys)
 DEFINE_MAPPER(values)
+
+static mrb_value
+mrb_k2hash_reject(mrb_state *mrb, mrb_value self)
+{
+  mrb_value block;
+  mrb_get_args(mrb, "&", &block);
+
+  mrb_value hash = mrb_funcall(mrb, self, "to_hash", 0);
+  mrb_sym reject_sym = mrb_intern_lit(mrb, "reject");
+  mrb_value rejected = mrb_funcall_with_block(mrb, hash, reject_sym, 0, NULL, block);
+
+  return rejected;
+}
 
 /*
  * Definitions
@@ -458,6 +472,7 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_method(mrb, rclass, "key?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "member?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "open", mrb_k2hash_open, MRB_ARGS_REQ(3));
+  mrb_define_method(mrb, rclass, "reject", mrb_k2hash_reject, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "reject!", mrb_k2hash_delete_if, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "store", mrb_k2hash_set, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, rclass, "value?", mrb_k2hash_has_value_q, MRB_ARGS_REQ(1));
