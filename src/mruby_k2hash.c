@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "mruby.h"
+#include "mruby/array.h"
 #include "mruby/data.h"
 #include "mruby/hash.h"
 #include "mruby/proc.h"
@@ -398,6 +399,39 @@ mrb_k2hash_invert(mrb_state *mrb, mrb_value self)
   return hash;
 }
 
+static mrb_value
+mrb_k2hash_values_at(mrb_state *mrb, mrb_value self)
+{
+  mrb_value *argv;
+  mrb_int argc;
+  mrb_get_args(mrb, "*", &argv, &argc);
+
+  k2h_h handler = _k2hash_get_handler(mrb, self);
+  mrb_value array = mrb_ary_new(mrb);
+
+  for (int i = 0; i<argc; i++) {
+    mrb_value str = argv[i];
+    if (!mrb_string_p(str)) {
+      continue;
+    }
+
+    const char* pkey = mrb_string_value_ptr(mrb, str);
+    size_t keylen = mrb_string_value_len(mrb, str);
+    unsigned char* pval = NULL;
+    size_t vallen = 0;
+    bool found = k2h_get_value(handler, (unsigned char*)pkey, keylen, &pval, &vallen);
+
+    if (found) {
+      mrb_value v = mrb_str_new(mrb, (char*)pval, vallen);
+      mrb_ary_push(mrb, array, v);
+    }
+
+    K2H_Free(pval);
+  }
+
+  return array;
+}
+
 /*
  * Enumerable methods
  */
@@ -476,6 +510,7 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_method(mrb, rclass, "reject!", mrb_k2hash_delete_if, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "store", mrb_k2hash_set, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, rclass, "value?", mrb_k2hash_has_value_q, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "values_at", mrb_k2hash_values_at, MRB_ARGS_ANY());
 
   mrb_include_module(mrb, rclass, mrb_module_get(mrb, "Enumerable"));
   mrb_define_method(mrb, rclass, "keys", mrb_k2hash_keys, MRB_ARGS_NONE());

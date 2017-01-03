@@ -174,6 +174,19 @@ class MrubyK2hashTest < MTest::Unit::TestCase
     assert_true hash['value3'] == 'key3'
   end
 
+  def test_values_at
+    k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
+    k2hash.store('key1', 'value1')
+    k2hash.store('key2', 'value2')
+    k2hash.store('key3', 'value3')
+
+    values = k2hash.values_at('key1', 'key2')
+    assert_true values.include? 'value1'
+    assert_true values.include? 'value2'
+    assert_false values.include? 'value3'
+  end
+
   #
   # Implemented by Enumerable
   #
@@ -220,6 +233,23 @@ class MrubyK2hashTest < MTest::Unit::TestCase
     assert_equal selected, [['key1', 'value1']]
   end
 
+  def test_reject
+    k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
+
+    k2hash.store('key1', 'value1')
+    k2hash.store('key2', 'value2')
+    k2hash.store('key3', 'value3')
+
+    rejected = k2hash.reject do |key, value|
+      key == 'key1'
+    end
+
+    assert_true rejected.is_a?(Hash)
+    assert_false rejected.has_key?('key1')
+    assert_true rejected.has_key?('key2')
+    assert_true rejected.has_key?('key3')
+  end
 end
 
 MTest::Unit.new.run
