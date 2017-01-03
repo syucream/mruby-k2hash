@@ -52,12 +52,12 @@ mirb - Embeddable Interactive Ruby Shell
 |:------------|--------------------|
 | []          | :heavy_check_mark: |
 | []=         | :heavy_check_mark: |
-| clear       |                    |
+| clear       | :heavy_check_mark: |
 | close       | :heavy_check_mark: |
 | closed?     | :heavy_check_mark: |
 | delete      | :heavy_check_mark: |
-| delete_if   |                    |
-| reject!     |                    |
+| delete_if   | :heavy_check_mark: |
+| reject!     | :heavy_check_mark: |
 | each        | :heavy_check_mark: |
 | each_pair   | :heavy_check_mark: |
 | each_key    | :heavy_check_mark: |
@@ -68,24 +68,23 @@ mirb - Embeddable Interactive Ruby Shell
 | include?    | :heavy_check_mark: |
 | key?        | :heavy_check_mark: |
 | member?     | :heavy_check_mark: |
-| has_value?  |                    |
-| value?      |                    |
-| index       |                    |
-| invert      |                    |
+| has_value?  | :heavy_check_mark: |
+| value?      | :heavy_check_mark: |
+| invert      | :heavy_check_mark: |
 | key         | :heavy_check_mark: |
 | keys        | :heavy_check_mark: |
 | length      | :heavy_check_mark: |
 | size        | :heavy_check_mark: |
-| reject      |                    |
+| reject      | :heavy_check_mark: |
 | replace     |                    |
-| select      |                    |
+| select      | :heavy_check_mark: |
 | shift       |                    |
 | store       | :heavy_check_mark: |
-| to_a        |                    |
-| to_hash     |                    |
+| to_a        | :heavy_check_mark: |
+| to_hash     | :heavy_check_mark: |
 | update      |                    |
 | values      | :heavy_check_mark: |
-| values_at   |                    |
+| values_at   | :heavy_check_mark: |
 
 # TODO
 
