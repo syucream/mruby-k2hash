@@ -163,6 +163,21 @@ class MrubyK2hashTest < MTest::Unit::TestCase
     assert_true array.include? ['key3', 'value3']
   end
 
+  def test_to_hash
+    k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
+    k2hash.store('key1', 'value1')
+    k2hash.store('key2', 'value2')
+    k2hash.store('key3', 'value3')
+
+    hash = k2hash.to_hash
+    assert_true hash.is_a?(Hash)
+
+    assert_true hash['key1'] == 'value1'
+    assert_true hash['key2'] == 'value2'
+    assert_true hash['key3'] == 'value3'
+  end
+
   def test_select
     k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
     k2hash.clear
