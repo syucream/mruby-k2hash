@@ -16,6 +16,22 @@ class MrubyK2hashTest < MTest::Unit::TestCase
     assert_nil k2hash.fetch('key1')
   end
 
+  def test_delete_if
+    k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+
+    k2hash.store('key1', 'value1')
+    k2hash.delete_if do |key, value|
+      key == 'key1'
+    end
+    assert_nil k2hash.fetch('key1')
+
+    k2hash.store('key1', 'value1')
+    k2hash.reject! do |key, value|
+      key == 'key1'
+    end
+    assert_nil k2hash.fetch('key1')
+  end
+
   def test_fetch_store
     k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
     k2hash.store('key1', 'value1')
@@ -101,6 +117,15 @@ class MrubyK2hashTest < MTest::Unit::TestCase
     k2hash.store('key3', 'value3')
 
     assert_equal k2hash.values, ['value1', 'value2', 'value3']
+  end
+
+  def test_to_a
+    k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.store('key1', 'value1')
+    k2hash.store('key2', 'value2')
+    k2hash.store('key3', 'value3')
+
+    assert_equal k2hash.to_a, [['key1', 'value1'], ['key2', 'value2'], ['key3', 'value3']]
   end
 
 end
