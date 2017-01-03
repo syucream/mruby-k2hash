@@ -76,13 +76,13 @@ mirb - Embeddable Interactive Ruby Shell
 | length      | :heavy_check_mark: |
 | size        | :heavy_check_mark: |
 | reject      | :heavy_check_mark: |
-| replace     |                    |
+| replace     | :heavy_check_mark: |
 | select      | :heavy_check_mark: |
-| shift       |                    |
+| shift       | :heavy_check_mark: |
 | store       | :heavy_check_mark: |
 | to_a        | :heavy_check_mark: |
 | to_hash     | :heavy_check_mark: |
-| update      |                    |
+| update      | :heavy_check_mark: |
 | values      | :heavy_check_mark: |
 | values_at   | :heavy_check_mark: |
 

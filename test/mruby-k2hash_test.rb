@@ -188,6 +188,16 @@ class MrubyK2hashTest < MTest::Unit::TestCase
     assert_false values.include? 'value3'
   end
 
+  def test_shift
+    k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
+    k2hash.store('key1', 'value1')
+
+    pair1 = k2hash.shift
+    assert_equal pair1, ['key1', 'value1']
+    assert_true k2hash.empty?
+  end
+
   #
   # Implemented by Enumerable
   #
