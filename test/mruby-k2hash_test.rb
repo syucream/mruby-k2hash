@@ -1,6 +1,17 @@
 class MrubyK2hashTest < MTest::Unit::TestCase
   K2HASH_FILENAME = '/tmp/mtest.k2hash'
 
+  def test_clear
+    k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.store('key1', 'value1')
+    k2hash.store('key2', 'value2')
+    k2hash.store('key3', 'value3')
+
+    k2hash.clear
+
+    assert_equal k2hash.size, 0
+  end
+
   def test_closed
     k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
     k2hash.close
@@ -10,6 +21,7 @@ class MrubyK2hashTest < MTest::Unit::TestCase
 
   def test_delete
     k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
     k2hash.store('key1', 'value1')
     k2hash.delete('key1')
 
@@ -18,6 +30,7 @@ class MrubyK2hashTest < MTest::Unit::TestCase
 
   def test_delete_if
     k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
 
     k2hash.store('key1', 'value1')
     k2hash.delete_if do |key, value|
@@ -34,6 +47,7 @@ class MrubyK2hashTest < MTest::Unit::TestCase
 
   def test_fetch_store
     k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
     k2hash.store('key1', 'value1')
 
     assert_equal k2hash.fetch('key1'), 'value1'
@@ -47,6 +61,7 @@ class MrubyK2hashTest < MTest::Unit::TestCase
 
   def test_each
     k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
     k2hash.store('key1', 'value1')
     k2hash.store('key2', 'value2')
     k2hash.store('key3', 'value3')
@@ -64,6 +79,7 @@ class MrubyK2hashTest < MTest::Unit::TestCase
 
   def test_each_key
     k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
     k2hash.store('key1', 'value1')
     k2hash.store('key2', 'value2')
     k2hash.store('key3', 'value3')
@@ -75,6 +91,7 @@ class MrubyK2hashTest < MTest::Unit::TestCase
 
   def test_each_value
     k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
     k2hash.store('key1', 'value1')
     k2hash.store('key2', 'value2')
     k2hash.store('key3', 'value3')
@@ -86,6 +103,7 @@ class MrubyK2hashTest < MTest::Unit::TestCase
 
   def test_has_key
     k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
     k2hash.store('key1', 'value1')
 
     assert_true k2hash.has_key?('key1')
@@ -103,29 +121,60 @@ class MrubyK2hashTest < MTest::Unit::TestCase
 
   def test_keys
     k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
     k2hash.store('key1', 'value1')
     k2hash.store('key2', 'value2')
     k2hash.store('key3', 'value3')
 
-    assert_equal k2hash.keys, ['key1', 'key2', 'key3']
+    keys = k2hash.keys
+    assert_true keys.include? 'key1'
+    assert_true keys.include? 'key2'
+    assert_true keys.include? 'key3'
   end
 
   def test_values
     k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
     k2hash.store('key1', 'value1')
     k2hash.store('key2', 'value2')
     k2hash.store('key3', 'value3')
 
-    assert_equal k2hash.values, ['value1', 'value2', 'value3']
+    values = k2hash.values
+    assert_true values.include? 'value1'
+    assert_true values.include? 'value2'
+    assert_true values.include? 'value3'
   end
+
+
+  #
+  # Implemented by Enumerable
+  #
 
   def test_to_a
     k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
     k2hash.store('key1', 'value1')
     k2hash.store('key2', 'value2')
     k2hash.store('key3', 'value3')
 
-    assert_equal k2hash.to_a, [['key1', 'value1'], ['key2', 'value2'], ['key3', 'value3']]
+    array = k2hash.to_a
+    assert_true array.include? ['key1', 'value1']
+    assert_true array.include? ['key2', 'value2']
+    assert_true array.include? ['key3', 'value3']
+  end
+
+  def test_select
+    k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
+    k2hash.store('key1', 'value1')
+    k2hash.store('key2', 'value2')
+    k2hash.store('key3', 'value3')
+
+    selected = k2hash.select do |key, value|
+      key == 'key1'
+    end
+
+    assert_equal selected, [['key1', 'value1']]
   end
 
 end

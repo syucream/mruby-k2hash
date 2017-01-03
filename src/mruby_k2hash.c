@@ -294,6 +294,22 @@ mrb_k2hash_has_key_q(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
+mrb_k2hash_clear(mrb_state *mrb, mrb_value self)
+{
+  unsigned char *ck	= NULL, *cv = NULL;
+  size_t klen = 0, vlen = 0;
+  k2h_h handler = _k2hash_get_handler(mrb, self);
+
+  K2HASH_ITER_BEGIN(mrb, handler, ck, klen, cv, vlen);
+  {
+    failed = !(k2h_remove_all(handler, ck, klen));
+  }
+  K2HASH_ITER_END(mrb, ck, cv);
+
+  return self;
+}
+
+static mrb_value
 mrb_k2hash_close(mrb_state *mrb, mrb_value self)
 {
   k2h_h handler = _k2hash_get_handler(mrb, self);
@@ -380,9 +396,11 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_method(mrb, rclass, "initialize", mrb_k2hash_open, MRB_ARGS_REQ(3));
   mrb_define_method(mrb, rclass, "[]", mrb_k2hash_get, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "[]=", mrb_k2hash_set, MRB_ARGS_REQ(2));
+  mrb_define_method(mrb, rclass, "clear", mrb_k2hash_clear, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "close", mrb_k2hash_close, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "closed?", mrb_k2hash_closed_q, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "delete", mrb_k2hash_delete, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "delete_if", mrb_k2hash_delete_if, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "each", mrb_k2hash_each, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "each_key", mrb_k2hash_each_key, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "each_pair", mrb_k2hash_each, MRB_ARGS_REQ(1));
@@ -394,9 +412,8 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_method(mrb, rclass, "key?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "member?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "open", mrb_k2hash_open, MRB_ARGS_REQ(3));
-  mrb_define_method(mrb, rclass, "store", mrb_k2hash_set, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, rclass, "reject!", mrb_k2hash_delete_if, MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, rclass, "delete_if", mrb_k2hash_delete_if, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "store", mrb_k2hash_set, MRB_ARGS_REQ(2));
 
   mrb_include_module(mrb, rclass, mrb_module_get(mrb, "Enumerable"));
   mrb_define_method(mrb, rclass, "keys", mrb_k2hash_keys, MRB_ARGS_NONE());
