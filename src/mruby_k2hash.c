@@ -3,6 +3,7 @@
 
 #include "mruby.h"
 #include "mruby/data.h"
+#include "mruby/hash.h"
 #include "mruby/proc.h"
 #include "mruby/variable.h"
 
@@ -353,6 +354,25 @@ mrb_k2hash_delete_if(mrb_state *mrb, mrb_value self)
   return self;
 }
 
+static mrb_value
+mrb_k2hash_invert(mrb_state *mrb, mrb_value self)
+{
+  unsigned char *ck	= NULL, *cv = NULL;
+  size_t klen = 0, vlen = 0;
+  k2h_h handler = _k2hash_get_handler(mrb, self);
+
+  mrb_value hash = mrb_hash_new(mrb);
+
+  K2HASH_ITER_BEGIN(mrb, handler, ck, klen, cv, vlen);
+  {
+    mrb_value key = mrb_str_new(mrb, (char*)ck, klen);
+    mrb_value val = mrb_str_new(mrb, (char*)cv, vlen);
+    mrb_hash_set(mrb, hash, val, key);
+  }
+  K2HASH_ITER_END(mrb, ck, cv);
+
+  return hash;
+}
 /*
  * Enumerable methods
  */
@@ -409,6 +429,7 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_method(mrb, rclass, "fetch", mrb_k2hash_get, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "has_key?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "include?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "invert", mrb_k2hash_invert, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "key?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "member?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "open", mrb_k2hash_open, MRB_ARGS_REQ(3));

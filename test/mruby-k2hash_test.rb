@@ -145,6 +145,20 @@ class MrubyK2hashTest < MTest::Unit::TestCase
     assert_true values.include? 'value3'
   end
 
+  def test_invert
+    k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
+    k2hash.store('key1', 'value1')
+    k2hash.store('key2', 'value2')
+    k2hash.store('key3', 'value3')
+
+    hash = k2hash.invert
+    assert_true hash.is_a?(Hash)
+
+    assert_true hash['value1'] == 'key1'
+    assert_true hash['value2'] == 'key2'
+    assert_true hash['value3'] == 'key3'
+  end
 
   #
   # Implemented by Enumerable
