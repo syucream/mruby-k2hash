@@ -62,3 +62,10 @@ RUN cd mruby &&                                                              \
     cd mruby-k2hash/ && git submodule update --init --recursive && cd ../ && \
     cd ../../../ &&                                                          \
     MRUBY_CONFIG=../build_config_example.rb ./minirake
+
+#
+# For development
+#
+RUN apt-get install -y       \
+            gdb              \
+            vim
