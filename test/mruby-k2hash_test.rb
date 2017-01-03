@@ -2,6 +2,25 @@ class MrubyK2hashTest < MTest::Unit::TestCase
   K2HASH_FILENAME = '/tmp/mtest.k2hash'
   K2HASH_OTHER_FILENAME = '/tmp/mtest_other.k2hash'
 
+  def test_open
+    # TODO Assert error cases
+    writer = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::WRITER)
+    writer.store('key1', 'value1')
+    writer.close
+
+    reader = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::READER)
+    assert_equal reader.fetch('key1'), 'value1'
+    reader.close
+
+    wrcreat = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::WRCREAT)
+    assert_false wrcreat.empty?
+    wrcreat.close
+
+    newdb = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    assert_true newdb.empty?
+    newdb.close
+  end
+
   def test_clear
     k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
     k2hash.store('key1', 'value1')
