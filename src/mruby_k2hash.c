@@ -2,13 +2,17 @@
 #include <string.h>
 
 #include "mruby.h"
+#include "mruby/array.h"
 #include "mruby/data.h"
+#include "mruby/hash.h"
 #include "mruby/proc.h"
+#include "mruby/string.h"
 #include "mruby/variable.h"
 
 #include "k2hash.h"
 #include "k2hutil.h"
 
+#define PAIR_ARGC 2
 #define K2HASH_CLASSNAME "K2Hash"
 #define E_K2HASH_ERROR (mrb_class_get_under(mrb, mrb_class_get(mrb, K2HASH_CLASSNAME), "K2HashHandlerError"))
 
@@ -28,6 +32,23 @@ enum OpenFlag {
 /*
  * Utils
  */
+#define K2HASH_ITER_BEGIN(mrb, h, k, klen, v, vlen)                                          \
+  for (k2h_find_h fh = k2h_find_first(h); K2H_INVALID_HANDLE != fh; fh = k2h_find_next(fh)) { \
+    bool failed = false;                                                                      \
+    if (k2h_find_get_key(fh, &k, &klen) && k2h_find_get_value(fh, &v, &vlen)) {
+
+#define K2HASH_ITER_END(mrb, k, v)                                                           \
+    } else {                                                                                  \
+      failed = true;                                                                          \
+    }                                                                                         \
+    K2H_Free(k);                                                                              \
+    K2H_Free(v);                                                                              \
+                                                                                              \
+    if (failed) {                                                                             \
+      mrb_raise(mrb, E_K2HASH_ERROR, "k2h_find iterations are failed");                       \
+    }                                                                                         \
+  }
+
 #define _k2hash_each_pair(mrb, block, h, rv)                                                  \
   for (k2h_find_h fh = k2h_find_first(h); K2H_INVALID_HANDLE != fh; fh = k2h_find_next(fh)) { \
     bool failed = _yield_with_pair(mrb, block, fh, &rv);                                      \
@@ -47,7 +68,6 @@ enum OpenFlag {
 static inline bool
 _yield_with_pair(mrb_state* mrb, mrb_value block, k2h_find_h fh, mrb_value* rv)
 {
-#define ARGC 2
   unsigned char *ck	= NULL, *cv = NULL;
   size_t klen = 0, vlen = 0;
   bool failed = false;
@@ -55,8 +75,8 @@ _yield_with_pair(mrb_state* mrb, mrb_value block, k2h_find_h fh, mrb_value* rv)
   if (k2h_find_get_key(fh, &ck, &klen) && k2h_find_get_value(fh, &cv, &vlen)) {
     mrb_value key = mrb_str_new(mrb, (char*)ck, klen);
     mrb_value val = mrb_str_new(mrb, (char*)cv, vlen);
-    mrb_value argv[ARGC] = {key, val};
-    *rv = mrb_yield_argv(mrb, block, ARGC, argv);
+    mrb_value argv[PAIR_ARGC] = {key, val};
+    *rv = mrb_yield_argv(mrb, block, PAIR_ARGC, argv);
   } else {
     failed = true;
   }
@@ -64,7 +84,6 @@ _yield_with_pair(mrb_state* mrb, mrb_value block, k2h_find_h fh, mrb_value* rv)
   K2H_Free(cv);
 
   return failed;
-#undef ARGC
 }
 
 static inline bool
@@ -278,6 +297,45 @@ mrb_k2hash_has_key_q(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
+mrb_k2hash_has_value_q(mrb_state *mrb, mrb_value self)
+{
+  mrb_value target;
+  mrb_get_args(mrb, "S", &target);
+
+  unsigned char *ck	= NULL, *cv = NULL;
+  size_t klen = 0, vlen = 0;
+  k2h_h handler = _k2hash_get_handler(mrb, self);
+
+  mrb_value found = mrb_false_value();
+  K2HASH_ITER_BEGIN(mrb, handler, ck, klen, cv, vlen);
+  {
+    mrb_value val = mrb_str_new(mrb, (char*)cv, vlen);
+    if (mrb_str_equal(mrb, val, target)) {
+      found = mrb_true_value();
+    }
+  }
+  K2HASH_ITER_END(mrb, ck, cv);
+
+  return found;
+}
+
+static mrb_value
+mrb_k2hash_clear(mrb_state *mrb, mrb_value self)
+{
+  unsigned char *ck	= NULL, *cv = NULL;
+  size_t klen = 0, vlen = 0;
+  k2h_h handler = _k2hash_get_handler(mrb, self);
+
+  K2HASH_ITER_BEGIN(mrb, handler, ck, klen, cv, vlen);
+  {
+    failed = !(k2h_remove_all(handler, ck, klen));
+  }
+  K2HASH_ITER_END(mrb, ck, cv);
+
+  return self;
+}
+
+static mrb_value
 mrb_k2hash_close(mrb_state *mrb, mrb_value self)
 {
   k2h_h handler = _k2hash_get_handler(mrb, self);
@@ -293,6 +351,85 @@ mrb_k2hash_closed_q(mrb_state *mrb, mrb_value self)
 {
   k2h_h handler = (k2h_h)DATA_PTR(self);
   return handler == NULL ? mrb_true_value() : mrb_false_value();
+}
+
+static mrb_value
+mrb_k2hash_delete_if(mrb_state *mrb, mrb_value self)
+{
+  mrb_value block;
+  mrb_get_args(mrb, "&", &block);
+
+  unsigned char *ck	= NULL, *cv = NULL;
+  size_t klen = 0, vlen = 0;
+  k2h_h handler = _k2hash_get_handler(mrb, self);
+
+  K2HASH_ITER_BEGIN(mrb, handler, ck, klen, cv, vlen);
+  {
+    mrb_value key = mrb_str_new(mrb, (char*)ck, klen);
+    mrb_value val = mrb_str_new(mrb, (char*)cv, vlen);
+    mrb_value argv[PAIR_ARGC] = {key, val};
+    mrb_value rc = mrb_yield_argv(mrb, block, PAIR_ARGC, argv);
+
+    if (mrb_bool(rc)) {
+      failed = !(k2h_remove_all(handler, ck, klen));
+    }
+  }
+  K2HASH_ITER_END(mrb, ck, cv);
+
+  return self;
+}
+
+static mrb_value
+mrb_k2hash_invert(mrb_state *mrb, mrb_value self)
+{
+  unsigned char *ck	= NULL, *cv = NULL;
+  size_t klen = 0, vlen = 0;
+  k2h_h handler = _k2hash_get_handler(mrb, self);
+
+  mrb_value hash = mrb_hash_new(mrb);
+
+  K2HASH_ITER_BEGIN(mrb, handler, ck, klen, cv, vlen);
+  {
+    mrb_value key = mrb_str_new(mrb, (char*)ck, klen);
+    mrb_value val = mrb_str_new(mrb, (char*)cv, vlen);
+    mrb_hash_set(mrb, hash, val, key);
+  }
+  K2HASH_ITER_END(mrb, ck, cv);
+
+  return hash;
+}
+
+static mrb_value
+mrb_k2hash_values_at(mrb_state *mrb, mrb_value self)
+{
+  mrb_value *argv;
+  mrb_int argc;
+  mrb_get_args(mrb, "*", &argv, &argc);
+
+  k2h_h handler = _k2hash_get_handler(mrb, self);
+  mrb_value array = mrb_ary_new(mrb);
+
+  for (int i = 0; i<argc; i++) {
+    mrb_value str = argv[i];
+    if (!mrb_string_p(str)) {
+      continue;
+    }
+
+    const char* pkey = mrb_string_value_ptr(mrb, str);
+    size_t keylen = mrb_string_value_len(mrb, str);
+    unsigned char* pval = NULL;
+    size_t vallen = 0;
+    bool found = k2h_get_value(handler, (unsigned char*)pkey, keylen, &pval, &vallen);
+
+    if (found) {
+      mrb_value v = mrb_str_new(mrb, (char*)pval, vallen);
+      mrb_ary_push(mrb, array, v);
+    }
+
+    K2H_Free(pval);
+  }
+
+  return array;
 }
 
 /*
@@ -325,6 +462,19 @@ _mrb_k2hash_values_map(mrb_state *mrb, mrb_value v)
 DEFINE_MAPPER(keys)
 DEFINE_MAPPER(values)
 
+static mrb_value
+mrb_k2hash_reject(mrb_state *mrb, mrb_value self)
+{
+  mrb_value block;
+  mrb_get_args(mrb, "&", &block);
+
+  mrb_value hash = mrb_funcall(mrb, self, "to_hash", 0);
+  mrb_sym reject_sym = mrb_intern_lit(mrb, "reject");
+  mrb_value rejected = mrb_funcall_with_block(mrb, hash, reject_sym, 0, NULL, block);
+
+  return rejected;
+}
+
 /*
  * Definitions
  */
@@ -338,9 +488,11 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_method(mrb, rclass, "initialize", mrb_k2hash_open, MRB_ARGS_REQ(3));
   mrb_define_method(mrb, rclass, "[]", mrb_k2hash_get, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "[]=", mrb_k2hash_set, MRB_ARGS_REQ(2));
+  mrb_define_method(mrb, rclass, "clear", mrb_k2hash_clear, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "close", mrb_k2hash_close, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "closed?", mrb_k2hash_closed_q, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "delete", mrb_k2hash_delete, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "delete_if", mrb_k2hash_delete_if, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "each", mrb_k2hash_each, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "each_key", mrb_k2hash_each_key, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "each_pair", mrb_k2hash_each, MRB_ARGS_REQ(1));
@@ -348,17 +500,24 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_method(mrb, rclass, "empty?", mrb_k2hash_empty_q, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "fetch", mrb_k2hash_get, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "has_key?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "has_value?", mrb_k2hash_has_value_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "include?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "invert", mrb_k2hash_invert, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "key?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "member?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "open", mrb_k2hash_open, MRB_ARGS_REQ(3));
+  mrb_define_method(mrb, rclass, "reject", mrb_k2hash_reject, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "reject!", mrb_k2hash_delete_if, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "store", mrb_k2hash_set, MRB_ARGS_REQ(2));
+  mrb_define_method(mrb, rclass, "value?", mrb_k2hash_has_value_q, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "values_at", mrb_k2hash_values_at, MRB_ARGS_ANY());
 
   mrb_include_module(mrb, rclass, mrb_module_get(mrb, "Enumerable"));
   mrb_define_method(mrb, rclass, "keys", mrb_k2hash_keys, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "values", mrb_k2hash_values, MRB_ARGS_NONE());
   mrb_define_alias(mrb, rclass, "length", "count");
   mrb_define_alias(mrb, rclass, "size", "count");
+  mrb_define_alias(mrb, rclass, "to_hash", "to_h");
 
   mrb_define_const(mrb, rclass, "READER", mrb_fixnum_value(FLAG_READER));
   mrb_define_const(mrb, rclass, "WRITER", mrb_fixnum_value(FLAG_WRITER));
