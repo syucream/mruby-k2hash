@@ -515,9 +515,6 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_include_module(mrb, rclass, mrb_module_get(mrb, "Enumerable"));
   mrb_define_method(mrb, rclass, "keys", mrb_k2hash_keys, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "values", mrb_k2hash_values, MRB_ARGS_NONE());
-  mrb_define_alias(mrb, rclass, "length", "count");
-  mrb_define_alias(mrb, rclass, "size", "count");
-  mrb_define_alias(mrb, rclass, "to_hash", "to_h");
 
   mrb_define_const(mrb, rclass, "READER", mrb_fixnum_value(FLAG_READER));
   mrb_define_const(mrb, rclass, "WRITER", mrb_fixnum_value(FLAG_WRITER));

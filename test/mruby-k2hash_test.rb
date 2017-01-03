@@ -1,5 +1,6 @@
 class MrubyK2hashTest < MTest::Unit::TestCase
   K2HASH_FILENAME = '/tmp/mtest.k2hash'
+  K2HASH_OTHER_FILENAME = '/tmp/mtest_other.k2hash'
 
   def test_clear
     k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
@@ -249,6 +250,51 @@ class MrubyK2hashTest < MTest::Unit::TestCase
     assert_false rejected.has_key?('key1')
     assert_true rejected.has_key?('key2')
     assert_true rejected.has_key?('key3')
+  end
+
+  def test_replace
+    k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
+    k2hash.store('key1', 'value1')
+    k2hash.store('key2', 'value2')
+    k2hash.store('key3', 'value3')
+
+    other = K2Hash.new(K2HASH_OTHER_FILENAME, 0666, K2Hash::NEWDB)
+    other.clear
+    other.store('other_key1', 'other_value1')
+    other.store('other_key2', 'other_value2')
+    other.store('other_key3', 'other_value3')
+
+    k2hash.replace(other)
+
+    assert_false k2hash.has_key?('key1')
+    assert_false k2hash.has_key?('key2')
+    assert_false k2hash.has_key?('key3')
+    assert_true k2hash.has_key?('other_key1')
+    assert_true k2hash.has_key?('other_key2')
+    assert_true k2hash.has_key?('other_key3')
+  end
+
+  def test_update
+    k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
+    k2hash.store('key1', 'value1')
+    k2hash.store('key2', 'value2')
+    k2hash.store('key3', 'value3')
+
+    other = K2Hash.new(K2HASH_OTHER_FILENAME, 0666, K2Hash::NEWDB)
+    other.clear
+    other.store('key1', 'other_value1')
+    other.store('other_key2', 'other_value2')
+    other.store('other_key3', 'other_value3')
+
+    k2hash.update(other)
+
+    assert_true k2hash['key1'] = 'other_value1'
+    assert_true k2hash['key2'] = 'value2'
+    assert_true k2hash['key3'] = 'value3'
+    assert_true k2hash['other_key2'] = 'other_value2'
+    assert_true k2hash['other_key3'] = 'other_value3'
   end
 end
 
