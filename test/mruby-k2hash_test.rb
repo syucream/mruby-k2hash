@@ -119,6 +119,20 @@ class MrubyK2hashTest < MTest::Unit::TestCase
     assert_false k2hash.member?('key1')
   end
 
+  def test_has_value
+    k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+    k2hash.clear
+    k2hash.store('key1', 'value1')
+
+    assert_true k2hash.has_value?('value1')
+    assert_true k2hash.value?('value1')
+
+    k2hash.delete('key1')
+
+    assert_false k2hash.has_value?('value1')
+    assert_false k2hash.value?('value1')
+  end
+
   def test_keys
     k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
     k2hash.clear

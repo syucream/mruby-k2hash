@@ -5,6 +5,7 @@
 #include "mruby/data.h"
 #include "mruby/hash.h"
 #include "mruby/proc.h"
+#include "mruby/string.h"
 #include "mruby/variable.h"
 
 #include "k2hash.h"
@@ -295,6 +296,29 @@ mrb_k2hash_has_key_q(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
+mrb_k2hash_has_value_q(mrb_state *mrb, mrb_value self)
+{
+  mrb_value target;
+  mrb_get_args(mrb, "S", &target);
+
+  unsigned char *ck	= NULL, *cv = NULL;
+  size_t klen = 0, vlen = 0;
+  k2h_h handler = _k2hash_get_handler(mrb, self);
+
+  mrb_value found = mrb_false_value();
+  K2HASH_ITER_BEGIN(mrb, handler, ck, klen, cv, vlen);
+  {
+    mrb_value val = mrb_str_new(mrb, (char*)cv, vlen);
+    if (mrb_str_equal(mrb, val, target)) {
+      found = mrb_true_value();
+    }
+  }
+  K2HASH_ITER_END(mrb, ck, cv);
+
+  return found;
+}
+
+static mrb_value
 mrb_k2hash_clear(mrb_state *mrb, mrb_value self)
 {
   unsigned char *ck	= NULL, *cv = NULL;
@@ -428,6 +452,7 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_method(mrb, rclass, "empty?", mrb_k2hash_empty_q, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "fetch", mrb_k2hash_get, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "has_key?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "has_value?", mrb_k2hash_has_value_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "include?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "invert", mrb_k2hash_invert, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "key?", mrb_k2hash_has_key_q, MRB_ARGS_REQ(1));
@@ -435,6 +460,7 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_method(mrb, rclass, "open", mrb_k2hash_open, MRB_ARGS_REQ(3));
   mrb_define_method(mrb, rclass, "reject!", mrb_k2hash_delete_if, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "store", mrb_k2hash_set, MRB_ARGS_REQ(2));
+  mrb_define_method(mrb, rclass, "value?", mrb_k2hash_has_value_q, MRB_ARGS_REQ(1));
 
   mrb_include_module(mrb, rclass, mrb_module_get(mrb, "Enumerable"));
   mrb_define_method(mrb, rclass, "keys", mrb_k2hash_keys, MRB_ARGS_NONE());
