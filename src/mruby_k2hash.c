@@ -14,7 +14,8 @@
 
 #define PAIR_ARGC 2
 #define K2HASH_CLASSNAME "K2Hash"
-#define E_K2HASH_ERROR (mrb_class_get_under(mrb, mrb_class_get(mrb, K2HASH_CLASSNAME), "K2HashHandlerError"))
+#define K2HASH_HANDLER_EXCEPTION "K2HashHandlerError"
+#define E_K2HASH_ERROR (mrb_class_get_under(mrb, mrb_class_get(mrb, K2HASH_CLASSNAME), K2HASH_HANDLER_EXCEPTION))
 
 // Original definition is k2hash/lib/k2hshm.h
 #define DEFAULT_MASK_BITCOUNT 8
@@ -62,6 +63,19 @@ _k2hash_get_handler(mrb_state* mrb, mrb_value self)
 }
 
 static void
+_k2hash_clear(mrb_state* mrb, k2h_h handler)
+{
+  unsigned char *ck	= NULL, *cv = NULL;
+  size_t klen = 0, vlen = 0;
+
+  K2HASH_ITER_BEGIN(mrb, handler, ck, klen, cv, vlen);
+  {
+    failed = !(k2h_remove_all(handler, ck, klen));
+  }
+  K2HASH_ITER_END(mrb, ck, cv);
+}
+
+static void
 _k2hash_close(mrb_state *mrb, void *p)
 {
   k2h_close((k2h_h)p);
@@ -102,9 +116,9 @@ mrb_k2hash_open(mrb_state *mrb, mrb_value self)
         DEFAULT_MASK_BITCOUNT, DEFAULT_COLLISION_MASK_BITCOUNT, DEFAULT_MAX_ELEMENT_CNT, MIN_PAGE_SIZE);
     break;
   case FLAG_NEWDB:
-    // TODO Clear old key/value's
     handler = k2h_open_rw(filename, 1,
         DEFAULT_MASK_BITCOUNT, DEFAULT_COLLISION_MASK_BITCOUNT, DEFAULT_MAX_ELEMENT_CNT, MIN_PAGE_SIZE);
+    _k2hash_clear(mrb, handler);
   default:
     break;
   }
@@ -272,15 +286,9 @@ mrb_k2hash_has_value_q(mrb_state *mrb, mrb_value self)
 static mrb_value
 mrb_k2hash_clear(mrb_state *mrb, mrb_value self)
 {
-  unsigned char *ck	= NULL, *cv = NULL;
-  size_t klen = 0, vlen = 0;
   k2h_h handler = _k2hash_get_handler(mrb, self);
 
-  K2HASH_ITER_BEGIN(mrb, handler, ck, klen, cv, vlen);
-  {
-    failed = !(k2h_remove_all(handler, ck, klen));
-  }
-  K2HASH_ITER_END(mrb, ck, cv);
+  _k2hash_clear(mrb, handler);
 
   return self;
 }
@@ -509,6 +517,8 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_const(mrb, rclass, "WRITER", mrb_fixnum_value(FLAG_WRITER));
   mrb_define_const(mrb, rclass, "WRCREAT", mrb_fixnum_value(FLAG_WRCREAT));
   mrb_define_const(mrb, rclass, "NEWDB", mrb_fixnum_value(FLAG_NEWDB));
+
+  mrb_define_class(mrb, K2HASH_HANDLER_EXCEPTION, rclass);
 }
 
 void
