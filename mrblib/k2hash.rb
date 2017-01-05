@@ -21,7 +21,17 @@ class K2Hash
     self
   end
 
-  alias length count
-  alias to_hash to_h
-  alias size count
+  # NOTE: These doesn't use alias to success building mrbtest
+
+  def length
+    count
+  end
+
+  def to_hash
+    to_h
+  end
+
+  def size
+    count
+  end
 end
