@@ -425,6 +425,38 @@ mrb_k2hash_shift(mrb_state *mrb, mrb_value self)
   }
 }
 
+static mrb_value
+mrb_k2hash_count(mrb_state *mrb, mrb_value self)
+{
+  k2h_h handler = _k2hash_get_handler(mrb, self);
+
+  mrb_int count = 0;
+  for (k2h_find_h fh = k2h_find_first(handler); K2H_INVALID_HANDLE != fh; fh = k2h_find_next(fh)) {
+    ++count;
+  }
+
+  return mrb_fixnum_value(count);
+}
+
+static mrb_value
+mrb_k2hash_to_hash(mrb_state *mrb, mrb_value self)
+{
+  unsigned char *ck	= NULL, *cv = NULL;
+  size_t klen = 0, vlen = 0;
+  k2h_h handler = _k2hash_get_handler(mrb, self);
+
+  mrb_value hash = mrb_hash_new(mrb);
+  K2HASH_ITER_BEGIN(mrb, handler, ck, klen, cv, vlen);
+  {
+    mrb_value key = mrb_str_new(mrb, (char*)ck, klen);
+    mrb_value val = mrb_str_new(mrb, (char*)cv, vlen);
+    mrb_hash_set(mrb, hash, key, val);
+  }
+  K2HASH_ITER_END(mrb, ck, cv);
+
+  return hash;
+}
+
 /*
  * Enumerable methods
  */
@@ -487,6 +519,7 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_method(mrb, rclass, "clear", mrb_k2hash_clear, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "close", mrb_k2hash_close, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "closed?", mrb_k2hash_closed_q, MRB_ARGS_NONE());
+  mrb_define_method(mrb, rclass, "count", mrb_k2hash_count, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "delete", mrb_k2hash_delete, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "delete_if", mrb_k2hash_delete_if, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "each", mrb_k2hash_each, MRB_ARGS_REQ(1));
@@ -506,6 +539,7 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_method(mrb, rclass, "reject!", mrb_k2hash_delete_if, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "shift", mrb_k2hash_shift, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "store", mrb_k2hash_set, MRB_ARGS_REQ(2));
+  mrb_define_method(mrb, rclass, "to_hash", mrb_k2hash_to_hash, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "value?", mrb_k2hash_has_value_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "values_at", mrb_k2hash_values_at, MRB_ARGS_ANY());
 
