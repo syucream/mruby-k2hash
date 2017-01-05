@@ -86,12 +86,16 @@ mirb - Embeddable Interactive Ruby Shell
 | values      | :heavy_check_mark: |
 | values_at   | :heavy_check_mark: |
 
+* subkey
+
+  - `get_subkeys(key) -> Array` returns subkey array corresponding to the key str
+  - `set_subkeys(key, subkeys) -> self` set the subkey array to the key str
+
 # TODO
 
 * Support k2hash features. Especially...:
 
   - open mode
-  - subkey
   - transaction
   - queue
   - attributes

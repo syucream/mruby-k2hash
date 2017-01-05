@@ -504,6 +504,63 @@ mrb_k2hash_reject(mrb_state *mrb, mrb_value self)
 }
 
 /*
+ * K2HASH specifics
+ */
+static mrb_value
+mrb_k2hash_get_subkeys(mrb_state *mrb, mrb_value self)
+{
+  char* key;
+  mrb_get_args(mrb, "z", &key);
+
+  k2h_h handler = _k2hash_get_handler(mrb, self);
+
+  char** skeyarray = NULL;
+  mrb_int count = k2h_get_str_subkeys(handler, key, &skeyarray);
+  if (count == -1) {
+    // To create empty array
+    count = 0;
+  }
+
+  mrb_value array = mrb_ary_new_capa(mrb, count);
+  for (int i = 0; i < count; i++) {
+    int ai = mrb_gc_arena_save(mrb);
+    mrb_value sk = mrb_str_new_cstr(mrb, skeyarray[i]);
+    mrb_ary_push(mrb, array, sk);
+    mrb_gc_arena_restore(mrb, ai);
+  }
+
+  return array;
+}
+
+static mrb_value
+mrb_k2hash_set_subkeys(mrb_state *mrb, mrb_value self)
+{
+  char* key;
+  mrb_value subkeys;
+  mrb_get_args(mrb, "zA", &key, &subkeys);
+
+  k2h_h handler = _k2hash_get_handler(mrb, self);
+
+  mrb_int count = RARRAY_LEN(subkeys);
+  const char** skeyarray = (const char**)mrb_malloc(mrb, (count + 1) * sizeof(char*));
+  for (int i = 0; i < count; i++) {
+    mrb_value sk = RARRAY_PTR(subkeys)[i];
+    // Should it check weather sk is a string?
+    const char* csk = mrb_string_value_ptr(mrb, sk);
+    skeyarray[i] = csk;
+  }
+  skeyarray[count] = NULL;
+
+  bool success = k2h_set_str_subkeys(handler, key, skeyarray);
+  mrb_free(mrb, skeyarray);
+
+  if (!success) {
+    mrb_raise(mrb, E_K2HASH_ERROR, "k2h_set_str_subkeys is failed");
+  }
+  return self;
+}
+
+/*
  * Definitions
  */
 void
@@ -546,6 +603,9 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_include_module(mrb, rclass, mrb_module_get(mrb, "Enumerable"));
   mrb_define_method(mrb, rclass, "keys", mrb_k2hash_keys, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "values", mrb_k2hash_values, MRB_ARGS_NONE());
+
+  mrb_define_method(mrb, rclass, "get_subkeys", mrb_k2hash_get_subkeys, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "set_subkeys", mrb_k2hash_set_subkeys, MRB_ARGS_REQ(1));
 
   mrb_define_const(mrb, rclass, "READER", mrb_fixnum_value(FLAG_READER));
   mrb_define_const(mrb, rclass, "WRITER", mrb_fixnum_value(FLAG_WRITER));
