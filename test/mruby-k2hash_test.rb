@@ -4,9 +4,9 @@ K2HASH_OTHER_FILENAME = '/tmp/mtest_other.k2hash'
 assert 'K2Hash#open' do
   # TODO assert error cases
 
-  writer = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::WRITER)
-  writer.store('key1', 'value1')
-  writer.close
+  init = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+  init.store('key1', 'value1')
+  init.close
 
   reader = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::READER)
   assert_equal reader.fetch('key1'), 'value1'
@@ -20,8 +20,8 @@ assert 'K2Hash#open' do
   assert_true newdb.empty?
   newdb.close
 
-  # NOTE dummy assertion to pass mrbtest
-  assert_true true
+  # NOTE dummy return value to pass mrbtest
+  true
 end
 
 assert 'K2Hash#clear' do
