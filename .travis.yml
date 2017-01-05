@@ -29,5 +29,4 @@ script:
   - mkdir -p mruby/build/host/mrbgems/
   - ln -s $TRAVIS_BUILD_DIR/ $TRAVIS_BUILD_DIR/mruby/build/host/mrbgems/mruby-k2hash
   - cp travis_config.rb mruby/
-  - cd mruby/ && MRUBY_CONFIG=travis_config.rb ./minirake && cd ../
-  - ./mruby/bin/mruby test/mruby-k2hash_test.rb
+  - cd mruby/ && MRUBY_CONFIG=travis_config.rb ./minirake test && cd ../
