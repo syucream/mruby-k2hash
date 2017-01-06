@@ -548,7 +548,7 @@ mrb_k2hash_set_subkeys(mrb_state *mrb, mrb_value self)
   k2h_h handler = _k2hash_get_handler(mrb, self);
 
   mrb_int count = RARRAY_LEN(subkeys);
-  K2HKEYPCK* keypack = (K2HKEYPCK*)mrb_malloc(mrb, count * sizeof(K2HKEYPCK*));
+  K2HKEYPCK* keypack = (K2HKEYPCK*)mrb_malloc(mrb, count * sizeof(K2HKEYPCK));
   for (int i = 0; i < count; i++) {
     mrb_value sk = RARRAY_PTR(subkeys)[i];
     // Should it check weather sk is a string?
