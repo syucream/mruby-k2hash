@@ -605,18 +605,22 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_method(mrb, rclass, "value?", mrb_k2hash_has_value_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "values_at", mrb_k2hash_values_at, MRB_ARGS_ANY());
 
+  // Enumerable
   mrb_include_module(mrb, rclass, mrb_module_get(mrb, "Enumerable"));
   mrb_define_method(mrb, rclass, "keys", mrb_k2hash_keys, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "values", mrb_k2hash_values, MRB_ARGS_NONE());
 
-  mrb_define_method(mrb, rclass, "get_subkeys", mrb_k2hash_get_subkeys, MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, rclass, "set_subkeys", mrb_k2hash_set_subkeys, MRB_ARGS_REQ(1));
+  // Subkey
+  mrb_define_method(mrb, rclass, "fetch_subkeys", mrb_k2hash_get_subkeys, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "store_subkeys", mrb_k2hash_set_subkeys, MRB_ARGS_REQ(1));
 
+  // Constants
   mrb_define_const(mrb, rclass, "READER", mrb_fixnum_value(FLAG_READER));
   mrb_define_const(mrb, rclass, "WRITER", mrb_fixnum_value(FLAG_WRITER));
   mrb_define_const(mrb, rclass, "WRCREAT", mrb_fixnum_value(FLAG_WRCREAT));
   mrb_define_const(mrb, rclass, "NEWDB", mrb_fixnum_value(FLAG_NEWDB));
 
+  // Exceptions
   mrb_define_class(mrb, K2HASH_HANDLER_EXCEPTION, rclass);
 }
 

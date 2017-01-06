@@ -88,8 +88,8 @@ mirb - Embeddable Interactive Ruby Shell
 
 * subkey
 
-  - `get_subkeys(key) -> Array` returns subkey array corresponding to the key str
-  - `set_subkeys(key, subkeys) -> self` set the subkey array to the key str
+  - `fetch_subkeys(key) -> Array` returns subkey array corresponding to the key str
+  - `store_subkeys(key, subkeys) -> self` set the subkey array to the key str
 
 # TODO
 
