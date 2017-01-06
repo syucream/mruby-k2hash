@@ -80,6 +80,11 @@ assert 'K2Hash#fetch_store' do
 
   assert_equal k2hash['key2'], 'value2'
   assert_nil k2hash['key200']
+
+  k2hash.store_subkeys('key1', ['subkey1', 'subkey2'])
+  k2hash.store('subkey1', 'subvalue1')
+  assert_equal k2hash['subkey1'], 'subvalue1'
+  assert_nil k2hash['subkey2']
 end
 
 assert 'K2Hash#each' do
@@ -218,6 +223,17 @@ assert 'K2Hash#shift' do
   pair1 = k2hash.shift
   assert_equal pair1, ['key1', 'value1']
   assert_true k2hash.empty?
+end
+
+assert 'K2Hash#fetch_store_subkeys' do
+  k2hash = K2Hash.new(K2HASH_FILENAME, 0666, K2Hash::NEWDB)
+  k2hash.clear
+
+  k2hash.store('key1', 'value1')
+  assert_equal k2hash.fetch_subkeys('key1'), []
+
+  k2hash.store_subkeys('key1', ['subkey1', 'subkey2'])
+  assert_equal k2hash.fetch_subkeys('key1'), ['subkey1', 'subkey2']
 end
 
 #
