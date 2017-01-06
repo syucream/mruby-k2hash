@@ -510,24 +510,29 @@ static mrb_value
 mrb_k2hash_get_subkeys(mrb_state *mrb, mrb_value self)
 {
   char* key;
-  mrb_get_args(mrb, "z", &key);
+  int keylen = 0;
+  mrb_get_args(mrb, "s", &key, &keylen);
 
   k2h_h handler = _k2hash_get_handler(mrb, self);
 
-  char** skeyarray = NULL;
-  mrb_int count = k2h_get_str_subkeys(handler, key, &skeyarray);
-  if (count == -1) {
-    // To create empty array
-    count = 0;
+  K2HKEYPCK* keypack = NULL;
+  int count = 0;
+  bool success = k2h_get_subkeys(handler, (unsigned char*)key, keylen, &keypack, &count);
+  if (!success) {
+    count = 0; // To ensure returning empty array
   }
 
   mrb_value array = mrb_ary_new_capa(mrb, count);
   for (int i = 0; i < count; i++) {
     int ai = mrb_gc_arena_save(mrb);
-    mrb_value sk = mrb_str_new_cstr(mrb, skeyarray[i]);
+    const char* csk = (const char*)keypack[i].pkey;
+    size_t csklen = keypack[i].length;
+    mrb_value sk = mrb_str_new(mrb, csk, csklen);
     mrb_ary_push(mrb, array, sk);
     mrb_gc_arena_restore(mrb, ai);
   }
+
+  k2h_free_keypack(keypack, count);
 
   return array;
 }
@@ -536,23 +541,23 @@ static mrb_value
 mrb_k2hash_set_subkeys(mrb_state *mrb, mrb_value self)
 {
   char* key;
+  int keylen = 0;
   mrb_value subkeys;
-  mrb_get_args(mrb, "zA", &key, &subkeys);
+  mrb_get_args(mrb, "sA", &key, &keylen, &subkeys);
 
   k2h_h handler = _k2hash_get_handler(mrb, self);
 
   mrb_int count = RARRAY_LEN(subkeys);
-  const char** skeyarray = (const char**)mrb_malloc(mrb, (count + 1) * sizeof(char*));
+  K2HKEYPCK* keypack = (K2HKEYPCK*)mrb_malloc(mrb, count * sizeof(K2HKEYPCK*));
   for (int i = 0; i < count; i++) {
     mrb_value sk = RARRAY_PTR(subkeys)[i];
     // Should it check weather sk is a string?
-    const char* csk = mrb_string_value_ptr(mrb, sk);
-    skeyarray[i] = csk;
+    keypack[i].pkey = (unsigned char*)mrb_string_value_ptr(mrb, sk);
+    keypack[i].length = mrb_string_value_len(mrb, sk);
   }
-  skeyarray[count] = NULL;
 
-  bool success = k2h_set_str_subkeys(handler, key, skeyarray);
-  mrb_free(mrb, skeyarray);
+  bool success = k2h_set_subkeys(handler, (unsigned char*)key, keylen, keypack, count);
+  mrb_free(mrb, keypack);
 
   if (!success) {
     mrb_raise(mrb, E_K2HASH_ERROR, "k2h_set_str_subkeys is failed");
