@@ -504,6 +504,68 @@ mrb_k2hash_reject(mrb_state *mrb, mrb_value self)
 }
 
 /*
+ * K2HASH specifics
+ */
+static mrb_value
+mrb_k2hash_get_subkeys(mrb_state *mrb, mrb_value self)
+{
+  char* key;
+  int keylen = 0;
+  mrb_get_args(mrb, "s", &key, &keylen);
+
+  k2h_h handler = _k2hash_get_handler(mrb, self);
+
+  K2HKEYPCK* keypack = NULL;
+  int count = 0;
+  bool success = k2h_get_subkeys(handler, (unsigned char*)key, keylen, &keypack, &count);
+  if (!success) {
+    count = 0; // To ensure returning empty array
+  }
+
+  mrb_value array = mrb_ary_new_capa(mrb, count);
+  for (int i = 0; i < count; i++) {
+    int ai = mrb_gc_arena_save(mrb);
+    const char* csk = (const char*)keypack[i].pkey;
+    size_t csklen = keypack[i].length;
+    mrb_value sk = mrb_str_new(mrb, csk, csklen);
+    mrb_ary_push(mrb, array, sk);
+    mrb_gc_arena_restore(mrb, ai);
+  }
+
+  k2h_free_keypack(keypack, count);
+
+  return array;
+}
+
+static mrb_value
+mrb_k2hash_set_subkeys(mrb_state *mrb, mrb_value self)
+{
+  char* key;
+  int keylen = 0;
+  mrb_value subkeys;
+  mrb_get_args(mrb, "sA", &key, &keylen, &subkeys);
+
+  k2h_h handler = _k2hash_get_handler(mrb, self);
+
+  mrb_int count = RARRAY_LEN(subkeys);
+  K2HKEYPCK* keypack = (K2HKEYPCK*)mrb_malloc(mrb, count * sizeof(K2HKEYPCK));
+  for (int i = 0; i < count; i++) {
+    mrb_value sk = RARRAY_PTR(subkeys)[i];
+    // Should it check weather sk is a string?
+    keypack[i].pkey = (unsigned char*)mrb_string_value_ptr(mrb, sk);
+    keypack[i].length = mrb_string_value_len(mrb, sk);
+  }
+
+  bool success = k2h_set_subkeys(handler, (unsigned char*)key, keylen, keypack, count);
+  mrb_free(mrb, keypack);
+
+  if (!success) {
+    mrb_raise(mrb, E_K2HASH_ERROR, "k2h_set_str_subkeys is failed");
+  }
+  return self;
+}
+
+/*
  * Definitions
  */
 void
@@ -543,15 +605,22 @@ mrb_mruby_k2hash_gem_init(mrb_state* mrb)
   mrb_define_method(mrb, rclass, "value?", mrb_k2hash_has_value_q, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, rclass, "values_at", mrb_k2hash_values_at, MRB_ARGS_ANY());
 
+  // Enumerable
   mrb_include_module(mrb, rclass, mrb_module_get(mrb, "Enumerable"));
   mrb_define_method(mrb, rclass, "keys", mrb_k2hash_keys, MRB_ARGS_NONE());
   mrb_define_method(mrb, rclass, "values", mrb_k2hash_values, MRB_ARGS_NONE());
 
+  // Subkey
+  mrb_define_method(mrb, rclass, "fetch_subkeys", mrb_k2hash_get_subkeys, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, rclass, "store_subkeys", mrb_k2hash_set_subkeys, MRB_ARGS_REQ(1));
+
+  // Constants
   mrb_define_const(mrb, rclass, "READER", mrb_fixnum_value(FLAG_READER));
   mrb_define_const(mrb, rclass, "WRITER", mrb_fixnum_value(FLAG_WRITER));
   mrb_define_const(mrb, rclass, "WRCREAT", mrb_fixnum_value(FLAG_WRCREAT));
   mrb_define_const(mrb, rclass, "NEWDB", mrb_fixnum_value(FLAG_NEWDB));
 
+  // Exceptions
   mrb_define_class(mrb, K2HASH_HANDLER_EXCEPTION, rclass);
 }
 
