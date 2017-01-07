@@ -1,7 +1,7 @@
 MRuby::Gem::Specification.new('mruby-k2hash') do |spec|
   spec.license = 'MIT'
   spec.authors = 'Ryo Okubo'
-  spec.version = '0.0.1'
+  spec.version = '0.1.1'
 
   k2hash_dir = "#{build_dir}/k2hash"
 
