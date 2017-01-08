@@ -6,12 +6,7 @@ MRuby::Gem::Specification.new('mruby-k2hash') do |spec|
   k2hash_dir = "#{build_dir}/k2hash"
 
   if !File.exists?(k2hash_dir)
-    Dir.chdir(build_dir) do
-      `git submodule init && git submodule update`
-      Dir.chdir(build_dir + '/fullock/') do
-        `git submodule init && git submodule update`
-      end
-    end
+      `git submodule update --init --recursive`
   end
 
   if !File.exists?("#{k2hash_dir}/lib/.libs/libk2hash.a")
@@ -24,5 +19,5 @@ MRuby::Gem::Specification.new('mruby-k2hash') do |spec|
 
   spec.cc.include_paths << "#{k2hash_dir}/lib"
   spec.linker.flags_before_libraries << "#{k2hash_dir}/lib/.libs/libk2hash.a"
-  spec.linker.flags_after_libraries << "-ldl -lcrypto -lpthread -lfullock"
+  spec.linker.flags_after_libraries << "-lstdc++ -ldl -lcrypto -lpthread -lfullock"
 end

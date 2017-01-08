@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "mruby.h"
 #include "mruby/array.h"
@@ -10,7 +11,6 @@
 #include "mruby/variable.h"
 
 #include "k2hash.h"
-#include "k2hutil.h"
 
 #define PAIR_ARGC 2
 #define K2HASH_CLASSNAME "K2Hash"
@@ -34,7 +34,8 @@ enum OpenFlag {
  * Utils
  */
 #define K2HASH_ITER_BEGIN(mrb, h, k, klen, v, vlen)                                           \
-  for (k2h_find_h fh = k2h_find_first(h); K2H_INVALID_HANDLE != fh; fh = k2h_find_next(fh)) { \
+  k2h_find_h fh = k2h_find_first(h);                                                          \
+  for (; K2H_INVALID_HANDLE != fh; fh = k2h_find_next(fh)) {                                  \
     bool failed = false;                                                                      \
     if (k2h_find_get_key(fh, &k, &klen) && k2h_find_get_value(fh, &v, &vlen)) {
 
@@ -42,13 +43,14 @@ enum OpenFlag {
     } else {                                                                                  \
       failed = true;                                                                          \
     }                                                                                         \
-    K2H_Free(k);                                                                              \
-    K2H_Free(v);                                                                              \
+    free(k);                                                                                  \
+    free(v);                                                                                  \
                                                                                               \
     if (failed) {                                                                             \
       mrb_raise(mrb, E_K2HASH_ERROR, "k2h_find iterations are failed");                       \
     }                                                                                         \
-  }
+  }                                                                                           \
+  k2h_find_free(fh);
 
 static inline k2h_h
 _k2hash_get_handler(mrb_state* mrb, mrb_value self)
@@ -105,10 +107,12 @@ mrb_k2hash_open(mrb_state *mrb, mrb_value self)
         DEFAULT_MASK_BITCOUNT, DEFAULT_COLLISION_MASK_BITCOUNT, DEFAULT_MAX_ELEMENT_CNT, MIN_PAGE_SIZE);
     break;
   case FLAG_WRITER:
-    struct stat st;
-    if (stat(filename, &st) == 0) {
-      handler = k2h_open_rw(filename, 1,
-          DEFAULT_MASK_BITCOUNT, DEFAULT_COLLISION_MASK_BITCOUNT, DEFAULT_MAX_ELEMENT_CNT, MIN_PAGE_SIZE);
+    {
+      struct stat st;
+      if (stat(filename, &st) == 0) {
+        handler = k2h_open_rw(filename, 1,
+            DEFAULT_MASK_BITCOUNT, DEFAULT_COLLISION_MASK_BITCOUNT, DEFAULT_MAX_ELEMENT_CNT, MIN_PAGE_SIZE);
+      }
     }
     break;
   case FLAG_WRCREAT:
@@ -146,7 +150,7 @@ mrb_k2hash_get(mrb_state *mrb, mrb_value self)
   bool success = k2h_get_value(handler, (unsigned char*)key, strlen(key), &pval, &vallen);
 
   mrb_value rv = success ? mrb_str_new(mrb, (char*)pval, vallen) : mrb_nil_value();
-  K2H_Free(pval);
+  free(pval);
 
   return rv;
 }
@@ -384,7 +388,7 @@ mrb_k2hash_values_at(mrb_state *mrb, mrb_value self)
       mrb_ary_push(mrb, array, v);
     }
 
-    K2H_Free(pval);
+    free(pval);
   }
 
   return array;
@@ -414,8 +418,9 @@ mrb_k2hash_shift(mrb_state *mrb, mrb_value self)
   } else {
     failed = true;
   }
-  K2H_Free(ck);
-  K2H_Free(cv);
+  free(ck);
+  free(cv);
+  k2h_find_free(fh);
 
   if (failed) {
     mrb_raise(mrb, E_K2HASH_ERROR, "k2h_find failed");
@@ -470,7 +475,7 @@ _mrb_k2hash_keys_map(mrb_state *mrb, mrb_value v)
 static mrb_value
 mrb_k2hash_keys(mrb_state *mrb, mrb_value self)
 {
-  RProc* proc = mrb_proc_new_cfunc(mrb, _mrb_k2hash_keys_map);
+  struct RProc* proc = mrb_proc_new_cfunc(mrb, _mrb_k2hash_keys_map);
   mrb_value block = mrb_obj_value(proc);
   return mrb_funcall_with_block(mrb, self, mrb_intern_lit(mrb, "map"), 0, NULL, block);
 }
@@ -485,7 +490,7 @@ _mrb_k2hash_values_map(mrb_state *mrb, mrb_value v)
 static mrb_value
 mrb_k2hash_values(mrb_state *mrb, mrb_value self)
 {
-  RProc* proc = mrb_proc_new_cfunc(mrb, _mrb_k2hash_values_map);
+  struct RProc* proc = mrb_proc_new_cfunc(mrb, _mrb_k2hash_values_map);
   mrb_value block = mrb_obj_value(proc);
   return mrb_funcall_with_block(mrb, self, mrb_intern_lit(mrb, "map"), 0, NULL, block);
 }
