@@ -15,18 +15,10 @@ before_script:
   - git clone --depth 1 https://github.com/mruby/mruby.git
 script:
   - echo '-------------------------------'
-  - echo 'Build mruby-k2hash             '
-  - echo '-------------------------------'
-  - autoreconf -if
-  - ./configure --with-mruby-prefix=./mruby
-  - cd k2hash/fullock/ && ./autogen.sh && ./configure && make && sudo make install && cd ../../
-  - cd k2hash/ && ./autogen.sh && ./configure && sudo make install && cd ../
-  - sudo ldconfig
-  - make
-  - echo '-------------------------------'
   - echo 'Run unit test                  '
   - echo '-------------------------------'
+  - git clone --depth 1 https://github.com/yahoojapan/fullock.git
+  - cd fullock/ && ./autogen.sh && ./configure && make && sudo make install && cd ../
+  - sudo ldconfig
   - mkdir -p mruby/build/host/mrbgems/
-  - ln -s $TRAVIS_BUILD_DIR/ $TRAVIS_BUILD_DIR/mruby/build/host/mrbgems/mruby-k2hash
-  - cp travis_config.rb mruby/
-  - cd mruby/ && MRUBY_CONFIG=travis_config.rb ./minirake test && cd ../
+  - cd mruby/ && MRUBY_CONFIG=../travis_config.rb ./minirake test && cd ../

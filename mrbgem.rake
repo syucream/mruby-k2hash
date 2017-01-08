@@ -4,20 +4,28 @@ MRuby::Gem::Specification.new('mruby-k2hash') do |spec|
   spec.version = '0.1.1'
 
   k2hash_dir = "#{build_dir}/k2hash"
+  fullock_dir = "#{build_dir}/k2hash/fullock"
+  prefix_dir = "#{build_dir}/_prefix"
+
+  FileUtils.mkdir_p build_dir
+  FileUtils.mkdir_p prefix_dir
 
   if !File.exists?(k2hash_dir)
-      `git submodule update --init --recursive`
-  end
-
-  if !File.exists?("#{k2hash_dir}/lib/.libs/libk2hash.a")
     Dir.chdir(build_dir) do
-      `autoreconf -if`
-      `./configure --with-k2hash-prefix=#{k2hash_dir}`
-      `make k2hash`
+      `git clone --depth 1 https://github.com/yahoojapan/k2hash.git`
+      Dir.chdir(k2hash_dir) do
+        `git submodule update --init --recursive`
+        Dir.chdir(fullock_dir) do
+          `./autogen.sh && ./configure --prefix=#{prefix_dir} && make && make install`
+        end
+        `ln -s #{prefix_dir}/include/fullock lib/fullock` # to avoid installing fullock
+        `./autogen.sh && ./configure --prefix=#{prefix_dir} && make && make install`
+      end
     end
   end
 
-  spec.cc.include_paths << "#{k2hash_dir}/lib"
-  spec.linker.flags_before_libraries << "#{k2hash_dir}/lib/.libs/libk2hash.a"
-  spec.linker.flags_after_libraries << "-lstdc++ -ldl -lcrypto -lpthread -lfullock"
+  spec.cc.include_paths << "#{prefix_dir}/include/k2hash"
+  spec.linker.flags_before_libraries << "#{prefix_dir}/lib/libfullock.a"
+  spec.linker.flags_before_libraries << "#{prefix_dir}/lib/libk2hash.a"
+  spec.linker.flags_after_libraries << "-lstdc++ -ldl -lcrypto -lpthread"
 end
