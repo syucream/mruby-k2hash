@@ -19,12 +19,13 @@ MRuby::Gem::Specification.new('mruby-k2hash') do |spec|
           `./autogen.sh && ./configure --prefix=#{prefix_dir} && make && make install`
         end
         `ln -s #{prefix_dir}/include/fullock lib/fullock` # to avoid installing fullock
-        `./autogen.sh && ./configure --prefix=#{prefix_dir} && make`
+        `./autogen.sh && ./configure --prefix=#{prefix_dir} && make && make install`
       end
     end
   end
 
-  spec.cc.include_paths << "#{k2hash_dir}/lib"
-  spec.linker.flags_before_libraries << "#{k2hash_dir}/lib/.libs/libk2hash.a"
-  spec.linker.flags_after_libraries << "-lstdc++ -ldl -lcrypto -lpthread -lfullock"
+  spec.cc.include_paths << "#{prefix_dir}/include/k2hash"
+  spec.linker.flags_before_libraries << "#{prefix_dir}/lib/libfullock.a"
+  spec.linker.flags_before_libraries << "#{prefix_dir}/lib/libk2hash.a"
+  spec.linker.flags_after_libraries << "-lstdc++ -ldl -lcrypto -lpthread"
 end

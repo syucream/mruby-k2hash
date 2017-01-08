@@ -6,7 +6,7 @@ MRuby::Build.new do |conf|
   conf.enable_test
 
   # to use k2hash
-  conf.linker.flags_after_libraries << "-lstdc++ -ldl -lcrypto -lpthread -lfullock"
+  conf.linker.flags_after_libraries << "-lstdc++ -ldl -lcrypto -lpthread"
 
   conf.gembox 'default'
   conf.gem './'
