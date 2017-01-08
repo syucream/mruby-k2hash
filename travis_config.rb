@@ -9,5 +9,5 @@ MRuby::Build.new do |conf|
   conf.linker.flags_after_libraries << "-lstdc++ -ldl -lcrypto -lpthread -lfullock"
 
   conf.gembox 'default'
-  conf.gem '../'
+  conf.gem './'
 end

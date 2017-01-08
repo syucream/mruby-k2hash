@@ -15,14 +15,7 @@ before_script:
   - git clone --depth 1 https://github.com/mruby/mruby.git
 script:
   - echo '-------------------------------'
-  - echo 'Build mruby-k2hash             '
-  - echo '-------------------------------'
-  - autoreconf -if
-  - ./configure --with-mruby-prefix=./mruby
-  - make
-  - echo '-------------------------------'
   - echo 'Run unit test                  '
   - echo '-------------------------------'
   - mkdir -p mruby/build/host/mrbgems/
-  - ln -s $TRAVIS_BUILD_DIR/ $TRAVIS_BUILD_DIR/mruby/build/host/mrbgems/mruby-k2hash
   - cd mruby/ && MRUBY_CONFIG=../travis_config.rb ./minirake test && cd ../
