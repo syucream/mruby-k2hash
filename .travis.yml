@@ -17,5 +17,8 @@ script:
   - echo '-------------------------------'
   - echo 'Run unit test                  '
   - echo '-------------------------------'
+  - git clone --depth 1 https://github.com/yahoojapan/fullock.git
+  - cd fullock/ && ./autogen.sh && ./configure && make && sudo make install && cd ../
+  - sudo ldconfig
   - mkdir -p mruby/build/host/mrbgems/
   - cd mruby/ && MRUBY_CONFIG=../travis_config.rb ./minirake test && cd ../
