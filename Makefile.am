@@ -1,4 +1,4 @@
-.PHONY: all k2hash clean
+.PHONY: all clean
 
 SOURCES = src/mruby_k2hash.c
 
@@ -22,10 +22,6 @@ libmruby_k2hash.o:
 
 libmruby_k2hash.a:
 	$(AR) -r libmruby_k2hash.a libmruby_k2hash.o
-
-k2hash:
-	cd $(K2HASH_PREFIX)/fullock/ && ./autogen.sh && ./configure && make
-	cd $(K2HASH_PREFIX)/ && ./autogen.sh && ./configure && make
 
 clean:
 	rm -f **/*.lo
